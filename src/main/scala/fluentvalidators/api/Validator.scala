@@ -63,7 +63,7 @@ package impl {
 
   import Validator.*
 
-  final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
+  private[api] final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
 
     override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
       instance.validNec
@@ -97,7 +97,7 @@ package impl {
 
   }
 
-  final private case class SeqValidator[+E, -A](rules: NonEmptyChain[Rule[E, A]])
+  private[api] final case class SeqValidator[+E, -A](rules: NonEmptyChain[Rule[E, A]])
     extends Validator[E, A] {
 
     override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
@@ -156,7 +156,7 @@ package impl {
     }
   }
 
-  final private case class ParValidator[+E, -A](validators: NonEmptyChain[Validator[E, A]])
+  private[api] final case class ParValidator[+E, -A](validators: NonEmptyChain[Validator[E, A]])
     extends Validator[E, A] {
 
     override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
@@ -208,7 +208,7 @@ package impl {
 
   }
 
-  private object ParValidator {
+  private[api] object ParValidator {
 
     inline def apply[E, A](inline headValidator: Validator[E, A],
                            inline tailValidators: Validator[E, A]*): ParValidator[E, A] = {
@@ -226,7 +226,7 @@ package impl {
 
   }
 
-  final private case class ValidatorChain[+E, -A](validators: NonEmptyChain[Validator[E, A]])
+  private[api] final case class ValidatorChain[+E, -A](validators: NonEmptyChain[Validator[E, A]])
     extends Validator[E, A] {
 
     override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
@@ -279,7 +279,7 @@ package impl {
 
   }
 
-  private object ValidatorChain {
+  private[api] object ValidatorChain {
     inline def apply[E, A](inline firstValidator: Validator[E, A],
                            inline secondValidator: Validator[E, A],
                            inline tailValidators: Validator[E, A]*): ValidatorChain[E, A] = {
