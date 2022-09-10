@@ -15,18 +15,6 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.*
 import org.scalatest.prop.*
 
-object ValidatorSpec {
-
-  sealed trait Error
-  object Error {
-    case object EmptyString extends Error
-    case object FalseBoolean extends Error
-    case object NonZeroInt extends Error
-  }
-
-  case class Data(nonEmpty: String = "something", nonFalse: Boolean, zero: Int)
-}
-
 final class ValidatorSpec extends AnyFlatSpec
   with should.Matchers with ValidatedNecMatchers with ValidatorRuleSyntaxFor[Error, Data] {
 
@@ -94,4 +82,16 @@ final class ValidatorSpec extends AnyFlatSpec
     validatorChain.validate(data) should beInvalidDue(FalseBoolean, NonZeroInt)
   }
 
+}
+
+object ValidatorSpec {
+
+  sealed trait Error
+  object Error {
+    case object EmptyString extends Error
+    case object FalseBoolean extends Error
+    case object NonZeroInt extends Error
+  }
+
+  case class Data(nonEmpty: String = "something", nonFalse: Boolean, zero: Int)
 }

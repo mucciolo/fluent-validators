@@ -26,7 +26,7 @@ sealed trait Validator[+E, -A] {
 
 }
 
-final private class ValidatorBuilder[-A]() {
+private final class ValidatorBuilder[-A]() {
   inline def withErrorTypeOf[E]: Validator[E, A] = new EmptyValidator[E, A]()
 }
 
