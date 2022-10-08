@@ -2,8 +2,8 @@ package com.mucciolo
 package fluentvalidators
 
 import fluentvalidators.matchers.ValidatedNecMatchers
-import fluentvalidators.ValidatorSpec.*
-import fluentvalidators.ValidatorSpec.Error.*
+import fluentvalidators.TestFixtures.*
+import fluentvalidators.TestFixtures.Error.*
 import fluentvalidators.api.Validator
 import fluentvalidators.api.Validator.Rule
 import fluentvalidators.syntax.ValidatorRuleSyntaxFor
@@ -12,86 +12,132 @@ import cats.data.Validated
 import cats.implicits.*
 import org.scalatest.*
 import org.scalatest.flatspec.*
+import org.scalatest.Inspectors.*
 import org.scalatest.matchers.*
 import org.scalatest.prop.*
 
 final class ValidatorSpec extends AnyFlatSpec
   with should.Matchers with ValidatedNecMatchers with ValidatorRuleSyntaxFor[Error, Data] {
 
-  private val ruleOne: Rule[Error, Data] = rule(_.nonFalse, FalseBoolean)
-  private val ruleTwo: Rule[Error, Data] = rule(_.zero == 0, NonZeroInt)
-
   private val seqValidator: Validator[Error, Data] =
     Validator.of[Data]
       .withErrorTypeOf[Error]
-      .seq(ruleOne, ruleTwo)
+      .seq(rule(_.negative < 0, NonNegativeInt), rule(_.positive > 0, NonPositiveInt))
 
   private val parValidator: Validator[Error, Data] =
     Validator.of[Data]
       .withErrorTypeOf[Error]
-      .par(ruleOne, ruleTwo)
+      .par(rule(_.negative < 0, NonNegativeInt), rule(_.positive > 0, NonPositiveInt))
 
   private val validatorChain: Validator[Error, Data] =
     Validator.of[Data]
       .withErrorTypeOf[Error]
-      .seq(rule(_.nonEmpty.nonEmpty, EmptyString))
-      .par(ruleOne, ruleTwo)
+      .seq(rule(_.zero == 0, NonZeroInt))
+      .par(rule(_.negative < 0, NonNegativeInt), rule(_.positive > 0, NonPositiveInt))
 
   "A sequential validator" should "short-circuit" in {
-    val data = Data(nonFalse = false, zero = 1)
-    seqValidator.validate(data) should beInvalidDue(FalseBoolean)
+    val data = Data(negative = +1, positive = +1)
+    seqValidator.validate(data) should beInvalidDue(NonNegativeInt)
   }
 
   it should "test the next rule of a satisfied rule" in {
-    val data = Data(nonFalse = true, zero = 1)
-    seqValidator.validate(data) should beInvalidDue(NonZeroInt)
+    val data = Data(negative = -1, positive = -1)
+    seqValidator.validate(data) should beInvalidDue(NonPositiveInt)
   }
 
   it should "return the validated object when all rules are satisfied" in {
-    val validData = Data(nonFalse = true, zero = 0)
+    val validData = Data(negative = -1, positive = +1)
     seqValidator.validate(validData) should beValid(validData)
   }
 
+  it should "be normalized to the same validator regardless of how it is declared" in {
+
+    val negativeRule: Rule[Error, Data] = rule(_.negative < 0, NonNegativeInt)
+    val zeroRule: Rule[Error, Data] = rule(_.zero == 0, NonZeroInt)
+    val positiveRule: Rule[Error, Data] = rule(_.positive > 0, NonPositiveInt)
+
+    val normalizedValidator = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(positiveRule, negativeRule, zeroRule)
+
+    val unnormVal1 = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(normalizedValidator)
+
+    val positiveRuleValidator = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(positiveRule)
+
+    val negativeRuleValidator = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(negativeRule)
+
+    val zeroRuleValidator = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(zeroRule)
+
+    val unnormVal2 = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(positiveRuleValidator, negativeRuleValidator, zeroRuleValidator)
+
+    val posAndNegRuleValidator = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(positiveRule, negativeRule)
+
+    val unnormVal3 = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(posAndNegRuleValidator, zeroRule)
+
+    val unnormVal4 = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(posAndNegRuleValidator, zeroRuleValidator)
+
+    val negAndZeroRuleValidator = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(negativeRule, zeroRule)
+
+    val unnormVal5 = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(positiveRule, negAndZeroRuleValidator)
+
+    val unnormVal6 = Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(positiveRuleValidator, negAndZeroRuleValidator)
+
+    val unnormalizedValidator =
+      List(unnormVal1, unnormVal2, unnormVal3, unnormVal4, unnormVal5, unnormVal6)
+
+    forAll(unnormalizedValidator)(_ should ===(normalizedValidator))
+  }
+
   "A parallel validator" should "apply rules parallelly" in {
-    val data = Data(nonFalse = false, zero = 1)
-    parValidator.validate(data) should beInvalidDue(FalseBoolean, NonZeroInt)
+    val data = Data(negative = +1, positive = -1)
+    parValidator.validate(data) should beInvalidDue(NonNegativeInt, NonPositiveInt)
   }
 
   it should "apply rules independently" in {
 
-    val dataNotFalse = Data(nonFalse = false, zero = 0)
-    parValidator.validate(dataNotFalse) should beInvalidDue(FalseBoolean)
+    val dataNonNegative = Data(negative = +1, positive = +1)
+    parValidator.validate(dataNonNegative) should beInvalidDue(NonNegativeInt)
 
-    val dataNonZero = Data(nonFalse = true, zero = 1)
-    parValidator.validate(dataNonZero) should beInvalidDue(NonZeroInt)
+    val dataNonPositive = Data(negative = -1, positive = -1)
+    parValidator.validate(dataNonPositive) should beInvalidDue(NonPositiveInt)
 
   }
 
   it should "return the validated object when all rules are satisfied" in {
-    val validData = Data(nonFalse = true, zero = 0)
+    val validData = Data(negative = -1, positive = +1)
     parValidator.validate(validData) should beValid(validData)
   }
 
   "A validation chain" should "short-circuit" in {
-    val data = Data(nonEmpty = "", nonFalse = false, zero = 1)
-    validatorChain.validate(data) should beInvalidDue(EmptyString)
+    val data = Data(negative = -1, zero = 9, positive = +1)
+    validatorChain.validate(data) should beInvalidDue(NonZeroInt)
   }
 
   it should "apply the next validator of a satisfied validator" in {
-    val data = Data(nonEmpty = "something", nonFalse = false, zero = 1)
-    validatorChain.validate(data) should beInvalidDue(FalseBoolean, NonZeroInt)
+    val data = Data(negative = +1, zero = 0, positive = -1)
+    validatorChain.validate(data) should beInvalidDue(NonNegativeInt, NonPositiveInt)
   }
 
-}
-
-object ValidatorSpec {
-
-  sealed trait Error
-  object Error {
-    case object EmptyString extends Error
-    case object FalseBoolean extends Error
-    case object NonZeroInt extends Error
-  }
-
-  case class Data(nonEmpty: String = "something", nonFalse: Boolean, zero: Int)
 }
