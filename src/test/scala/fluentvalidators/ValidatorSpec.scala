@@ -17,7 +17,9 @@ import org.scalatest.matchers.*
 import org.scalatest.prop.*
 
 final class ValidatorSpec extends AnyFlatSpec
-  with should.Matchers with ValidatedNecMatchers with ValidatorRuleSyntaxFor[Error, Data] {
+                          with should.Matchers
+                          with ValidatedNecMatchers
+                          with ValidatorRuleSyntaxFor[Error, Data] {
 
   private val seqValidator: Validator[Error, Data] =
     Validator.of[Data]
