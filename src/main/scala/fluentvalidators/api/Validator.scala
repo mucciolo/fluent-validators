@@ -14,11 +14,24 @@ sealed trait Validator[+E, -A] {
   def validate[B <: A](instance: B)
                       (using semigroup: Semigroup[B] = Semigroup.first[B]): ValidatedNec[E, B]
 
-  def seq[EE >: E, B <: A](headRuleOrValidator: RuleOrValidator[EE, B],
-                           tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B]
+  protected def parseSeqHeadRuleOrValidator[EE >: E, B <: A](
+    headRuleOrValidator: RuleOrValidator[EE, B]): Validator[EE, B]
 
-  def par[EE >: E, B <: A](headRuleOrValidator: RuleOrValidator[EE, B],
-                           tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B]
+  def seq[EE >: E, B <: A](
+    headRuleOrValidator : RuleOrValidator[EE, B],
+    tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B] = {
+
+    val headValidator = parseSeqHeadRuleOrValidator(headRuleOrValidator)
+
+    tailRuleOrValidators match {
+      case head +: tail => headValidator.seq(head, tail: _*)
+      case _ => headValidator
+    }
+  }
+
+  def par[EE >: E, B <: A](
+    headRuleOrValidator : RuleOrValidator[EE, B],
+    tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B]
 
   def narrow[B <: A]: Validator[E, B]
 
@@ -69,21 +82,13 @@ package impl {
       instance.validNec
     }
 
-    override def seq[EE >: E, B <: A](
-      headRuleOrValidator: RuleOrValidator[EE, B],
+    override protected def parseSeqHeadRuleOrValidator[EE >: E, B <: A](
+      headRuleOrValidator: RuleOrValidator[EE, B]): Validator[EE, B] =
+      headRuleOrValidator.toValidator
+
+    override def par[EE >: E, B <: A](
+      headRuleOrValidator : RuleOrValidator[EE, B],
       tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B] = {
-
-      val headValidator = headRuleOrValidator.toValidator
-
-      tailRuleOrValidators match {
-        case head +: tail => headValidator.seq(head, tail: _*)
-        case _ => headValidator
-      }
-    }
-
-    override def par[EE >: E, B <: A]
-      (headRuleOrValidator: RuleOrValidator[EE, B],
-       tailRuleOrValidators: RuleOrValidator[EE, B]*) : Validator[EE, B] = {
       ParValidator(headRuleOrValidator, tailRuleOrValidators: _*)
     }
 
@@ -102,15 +107,15 @@ package impl {
 
     override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
       rules.foldLeft(instance.asRight[NonEmptyChain[E]]) {
-        (validated: EitherNec[E, B], rule: Rule[E, A]) => validated |+| rule.apply(instance).toEither
+        (validated: EitherNec[E, B], rule: Rule[E, A]) =>
+          validated |+| rule.apply(instance).toEither
       }.toValidated
     }
 
-    override def seq[EE >: E, B <: A](
-      headRuleOrValidator: RuleOrValidator[EE, B],
-      tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B] = {
+    override protected def parseSeqHeadRuleOrValidator[EE >: E, B <: A](
+      headRuleOrValidator: RuleOrValidator[EE, B]): Validator[EE, B] =
+      headRuleOrValidator match {
 
-      val headValidator = headRuleOrValidator match {
         case rule: Rule[EE, B] =>
           new SeqValidator(this.rules :+ rule)
 
@@ -125,13 +130,8 @@ package impl {
 
         case _: EmptyValidator[EE, B] =>
           this
-      }
 
-      tailRuleOrValidators match {
-        case head +: tail => headValidator.seq(head, tail: _*)
-        case _ => headValidator
       }
-    }
 
     override def par[EE >: E, B <: A](
       headRuleOrValidator: RuleOrValidator[EE, B],
@@ -165,11 +165,10 @@ package impl {
       }
     }
 
-    override def seq[EE >: E, B <: A](headRuleOrValidator: RuleOrValidator[EE, B],
-                                      tailRuleOrValidators: RuleOrValidator[EE, B]*)
-    : Validator[EE, B] = {
+    override protected def parseSeqHeadRuleOrValidator[EE >: E, B <: A](
+      headRuleOrValidator: RuleOrValidator[EE, B]): Validator[EE, B] =
+      headRuleOrValidator match {
 
-      val headValidator = headRuleOrValidator match {
         case rule: Rule[EE, B] =>
           ValidatorChain(this, rule.toValidator)
 
@@ -184,13 +183,8 @@ package impl {
 
         case _: EmptyValidator[EE, B] =>
           this
-      }
 
-      tailRuleOrValidators match {
-        case head +: tail => headValidator.seq(head, tail: _*)
-        case _ => headValidator
       }
-    }
 
     override def par[EE >: E, B <: A](headRuleOrValidator: RuleOrValidator[EE, B],
                                       tailRuleOrValidators: RuleOrValidator[EE, B]*)
@@ -235,14 +229,12 @@ package impl {
       }.toValidated
     }
 
-    override def seq[EE >: E, B <: A](
-      headRuleOrValidator: RuleOrValidator[EE, B],
-      tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B] = {
 
-      validators.init
+    override protected def parseSeqHeadRuleOrValidator[EE >: E, B <: A](
+      headRuleOrValidator: RuleOrValidator[EE, B]): Validator[EE, B] =
+      headRuleOrValidator match {
 
-      // TODO squash rule and sequential validators
-      val headValidator = headRuleOrValidator match {
+        // TODO squash rule and sequential validators
         case rule: Rule[EE, B] =>
           new ValidatorChain(this.validators :+ rule.toValidator)
 
@@ -254,18 +246,12 @@ package impl {
 
         case _: EmptyValidator[EE, B] =>
           this
+
       }
 
-
-      tailRuleOrValidators match {
-        case head +: tail => headValidator.seq(head, tail: _*)
-        case _ => headValidator
-      }
-    }
-
-    override def par[EE >: E, B <: A](headRuleOrValidator: RuleOrValidator[EE, B],
-                                      tailRuleOrValidators: RuleOrValidator[EE, B]*)
-    : Validator[EE, B] = {
+    override def par[EE >: E, B <: A](
+      headRuleOrValidator : RuleOrValidator[EE, B],
+      tailRuleOrValidators: RuleOrValidator[EE, B]*): Validator[EE, B] = {
       new ValidatorChain(validators :+ ParValidator(headRuleOrValidator, tailRuleOrValidators: _*))
     }
 
