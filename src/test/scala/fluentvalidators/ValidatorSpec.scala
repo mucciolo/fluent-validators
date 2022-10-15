@@ -4,8 +4,9 @@ package fluentvalidators
 import fluentvalidators.matchers.ValidatedNecMatchers
 import fluentvalidators.TestFixtures.*
 import fluentvalidators.TestFixtures.Error.*
-import fluentvalidators.api.Validator
-import fluentvalidators.api.Validator.Rule
+import fluentvalidators.api.*
+import fluentvalidators.api.Validator.*
+import fluentvalidators.api.Rule.*
 import fluentvalidators.syntax.ValidatorRuleSyntaxFor
 
 import cats.data.Validated
@@ -29,12 +30,6 @@ final class ValidatorSpec extends AnyFlatSpec
   private val parValidator: Validator[Error, Data] =
     Validator.of[Data]
       .withErrorTypeOf[Error]
-      .par(rule(_.negative < 0, NonNegativeInt), rule(_.positive > 0, NonPositiveInt))
-
-  private val validatorChain: Validator[Error, Data] =
-    Validator.of[Data]
-      .withErrorTypeOf[Error]
-      .seq(rule(_.zero == 0, NonZeroInt))
       .par(rule(_.negative < 0, NonNegativeInt), rule(_.positive > 0, NonPositiveInt))
 
   "A sequential validator" should "short-circuit" in {
@@ -130,16 +125,6 @@ final class ValidatorSpec extends AnyFlatSpec
   it should "return the validated object when all rules are satisfied" in {
     val validData = Data(negative = -1, positive = +1)
     parValidator.validate(validData) should beValid(validData)
-  }
-
-  "A validation chain" should "short-circuit" in {
-    val data = Data(negative = -1, zero = 9, positive = +1)
-    validatorChain.validate(data) should beInvalidDue(NonZeroInt)
-  }
-
-  it should "apply the next validator of a satisfied validator" in {
-    val data = Data(negative = +1, zero = 0, positive = -1)
-    validatorChain.validate(data) should beInvalidDue(NonNegativeInt, NonPositiveInt)
   }
 
 }

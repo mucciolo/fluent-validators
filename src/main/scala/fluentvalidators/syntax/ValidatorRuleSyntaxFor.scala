@@ -1,9 +1,10 @@
 package com.mucciolo
 package fluentvalidators.syntax
 
-import com.mucciolo.fluentvalidators.api.Validator.Rule
-import com.mucciolo.fluentvalidators.api.Validator
+import fluentvalidators.api.Validator
+import fluentvalidators.api.Rule
 
 trait ValidatorRuleSyntaxFor[E, A] {
-  inline protected def rule: (A => Boolean, E) => Rule[E, A] = Validator.rule[E, A](_, _)
+  inline protected def rule(inline predicate: A => Boolean, inline caseFalse: E): Rule[E, A] =
+    Rule.rule[E, A](predicate, caseFalse)
 }

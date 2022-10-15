@@ -3,7 +3,8 @@ package fluentvalidators.api
 
 import fluentvalidators.TestFixtures.*
 import fluentvalidators.api.Validator
-import fluentvalidators.api.Validator.Rule
+import fluentvalidators.api.Validator.*
+import fluentvalidators.api.Rule.*
 import fluentvalidators.api.impl.*
 import fluentvalidators.syntax.ValidatorRuleSyntaxFor
 
@@ -15,7 +16,8 @@ import org.scalatest.matchers.*
 import org.scalatest.prop.*
 
 final class ValidatorApiSpec extends AnyFlatSpec
-                             with should.Matchers with ValidatorRuleSyntaxFor[Error, Data] {
+                             with should.Matchers
+                             with ValidatorRuleSyntaxFor[Error, Data] {
 
   "Validator API" should "create an empty validator" in {
     Validator.of[Data].withErrorTypeOf[Error] shouldBe a [EmptyValidator[Error, Data]]
