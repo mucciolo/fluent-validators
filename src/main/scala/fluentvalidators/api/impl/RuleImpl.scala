@@ -25,10 +25,11 @@ private[api] final case class RuleImpl[+E, -A](predicate: A => Boolean, caseFals
   }
 
   override def par[EE >: E, B <: A](
-    headValidator : Validator[EE, B],
-    tailValidators: Validator[EE, B]*
+    firstValidator : Validator[EE, B],
+    secondValidator: Validator[EE, B],
+    tailValidators : Validator[EE, B]*
   ): Validator[EE, B] = {
-    SeqValidator(this, ParValidator(headValidator, tailValidators: _*))
+    SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
   }
 
   override def narrow[B <: A]: Rule[E, B] = {

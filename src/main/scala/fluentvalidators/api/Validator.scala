@@ -33,10 +33,11 @@ trait Validator[+E, -A] {
     }
   }
 
-  // TODO add second validator
   def par[EE >: E, B <: A](
-    headValidator : Validator[EE, B],
-    tailValidators: Validator[EE, B]*): Validator[EE, B]
+    firstValidator : Validator[EE, B],
+    secondValidator: Validator[EE, B],
+    tailValidators : Validator[EE, B]*
+  ): Validator[EE, B]
 
   def narrow[B <: A]: Validator[E, B]
 
@@ -44,10 +45,10 @@ trait Validator[+E, -A] {
 
 }
 
-private final class ValidatorBuilder[-A]() {
-  inline def withErrorTypeOf[E]: Validator[E, A] = new EmptyValidator[E, A]()
-}
-
 object Validator {
   inline def of[A] = new ValidatorBuilder[A]()
+}
+
+private final class ValidatorBuilder[-A]() {
+  inline def withErrorTypeOf[E]: Validator[E, A] = new EmptyValidator[E, A]()
 }

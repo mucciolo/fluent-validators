@@ -22,10 +22,11 @@ private[api] final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
   }
 
   override def par[EE >: E, B <: A](
-    headValidator : Validator[EE, B],
-    tailValidators: Validator[EE, B]*
+    firstValidator : Validator[EE, B],
+    secondValidator: Validator[EE, B],
+    tailValidators : Validator[EE, B]*
   ): Validator[EE, B] = {
-    ParValidator(headValidator, tailValidators: _*)
+    ParValidator(firstValidator, secondValidator, tailValidators: _*)
   }
 
   override def narrow[B <: A]: Validator[E, B] = {

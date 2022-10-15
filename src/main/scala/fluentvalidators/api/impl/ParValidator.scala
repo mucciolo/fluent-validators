@@ -29,10 +29,11 @@ private[api] final case class ParValidator[+E, -A](validators: NonEmptyChain[Val
   }
 
   override def par[EE >: E, B <: A](
-    headValidator : Validator[EE, B],
-    tailValidators: Validator[EE, B]*
+    firstValidator : Validator[EE, B],
+    secondValidator: Validator[EE, B],
+    tailValidators : Validator[EE, B]*
   ): Validator[EE, B] = {
-    SeqValidator(this, ParValidator(headValidator, tailValidators: _*))
+    SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
   }
 
   override def narrow[B <: A]: Validator[E, B] = {
@@ -48,10 +49,11 @@ private[api] final case class ParValidator[+E, -A](validators: NonEmptyChain[Val
 private[api] object ParValidator {
 
   inline def apply[E, A](
-    inline headValidator : Validator[E, A],
-    inline tailValidators: Validator[E, A]*
+    inline firstValidator : Validator[E, A],
+    inline secondValidator: Validator[E, A],
+    inline tailValidators : Validator[E, A]*
   ): ParValidator[E, A] = {
-    new ParValidator(NonEmptyChain.of(headValidator, tailValidators: _*))
+    new ParValidator(firstValidator +: NonEmptyChain.of(secondValidator, tailValidators: _*))
   }
 
 }

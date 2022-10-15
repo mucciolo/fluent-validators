@@ -19,20 +19,23 @@ final class ValidatorApiSpec extends AnyFlatSpec
                              with should.Matchers
                              with ValidatorRuleSyntaxFor[Error, Data] {
 
-  "Validator API" should "create an empty validator" in {
-    Validator.of[Data].withErrorTypeOf[Error] shouldBe a [EmptyValidator[Error, Data]]
+  "Validator API" should "build an empty validator" in {
+    Validator.of[Data].withErrorTypeOf[Error] shouldBe an [EmptyValidator[Error, Data]]
   }
 
-  it should "create a sequential validator" in {
+  it should "build a sequential validator" in {
     Validator.of[Data]
       .withErrorTypeOf[Error]
       .seq(rule(_.zero == 0, NonZeroInt)) shouldBe a [SeqValidator[Error, Data]]
   }
 
-  it should "create a parallel validator" in {
+  it should "build a parallel validator" in {
     Validator.of[Data]
       .withErrorTypeOf[Error]
-      .par(rule(_.zero == 0, NonZeroInt)) shouldBe a [ParValidator[Error, Data]]
+      .par(
+        rule(_.negative < 0, NonNegativeInt),
+        rule(_.positive > 0, NonPositiveInt)
+      ) shouldBe a [ParValidator[Error, Data]]
   }
 
 }
