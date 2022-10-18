@@ -6,7 +6,6 @@ import fluentvalidators.TestFixtures.*
 import fluentvalidators.TestFixtures.Error.*
 import fluentvalidators.api.*
 import fluentvalidators.api.Validator.*
-import fluentvalidators.api.Rule.*
 import fluentvalidators.syntax.ValidatorRuleSyntaxFor
 
 import cats.data.Validated

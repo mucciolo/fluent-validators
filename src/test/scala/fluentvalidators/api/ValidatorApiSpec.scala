@@ -4,7 +4,6 @@ package fluentvalidators.api
 import fluentvalidators.TestFixtures.*
 import fluentvalidators.api.Validator
 import fluentvalidators.api.Validator.*
-import fluentvalidators.api.Rule.*
 import fluentvalidators.api.impl.*
 import fluentvalidators.syntax.ValidatorRuleSyntaxFor
 
@@ -23,19 +22,56 @@ final class ValidatorApiSpec extends AnyFlatSpec
     Validator.of[Data].withErrorTypeOf[Error] shouldBe an [EmptyValidator[Error, Data]]
   }
 
-  it should "build a sequential validator" in {
+  it should "build a sequential validator of 'seq' call" in {
     Validator.of[Data]
       .withErrorTypeOf[Error]
       .seq(rule(_.zero == 0, NonZeroInt)) shouldBe a [SeqValidator[Error, Data]]
   }
 
-  it should "build a parallel validator" in {
+  it should "build a parallel validator of 'par' call" in {
     Validator.of[Data]
       .withErrorTypeOf[Error]
       .par(
         rule(_.negative < 0, NonNegativeInt),
         rule(_.positive > 0, NonPositiveInt)
       ) shouldBe a [ParValidator[Error, Data]]
+  }
+
+  it should "build a sequential validator of 'seq' followed by 'par'" in {
+    Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .seq(
+        rule(_.zero == 0, NonZeroInt)
+      )
+      .par(
+        rule(_.negative < 0, NonNegativeInt),
+        rule(_.positive > 0, NonPositiveInt)
+      ) shouldBe a [SeqValidator[Error, Data]]
+  }
+
+  it should "build a sequential validator of 'par' followed by 'seq'" in {
+    Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .par(
+        rule(_.negative < 0, NonNegativeInt),
+        rule(_.positive > 0, NonPositiveInt)
+      )
+      .seq(
+        rule(_.zero == 0, NonZeroInt)
+      ) shouldBe a [SeqValidator[Error, Data]]
+  }
+
+  it should "build a sequential validator of 'par' followed by 'par'" in {
+    Validator.of[Data]
+      .withErrorTypeOf[Error]
+      .par(
+        rule(_.negative < 0, NonNegativeInt),
+        rule(_.positive > 0, NonPositiveInt)
+      )
+      .par(
+        rule(_.zero == 0, NonZeroInt),
+        rule(_.nonEmpty.nonEmpty, EmptyString)
+      ) shouldBe a [SeqValidator[Error, Data]]
   }
 
 }
