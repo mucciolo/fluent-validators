@@ -1,7 +1,7 @@
 package com.mucciolo
 package fluentvalidators.api
 
-import fluentvalidators.api.impl.RuleImpl
+import fluentvalidators.api.impl.SingletonValidator
 
 trait Rule[+E, -A] extends Validator[E, A] {
   override def narrow[B <: A]: Rule[E, B]
@@ -9,5 +9,5 @@ trait Rule[+E, -A] extends Validator[E, A] {
 }
 
 object Rule {
-  def rule[E, A](predicate: A => Boolean, caseFalse: E): Rule[E, A] = RuleImpl(predicate, caseFalse)
+  def rule[E, A](predicate: A => Boolean, caseFalse: E): Rule[E, A] = SingletonValidator(predicate, caseFalse)
 }

@@ -7,7 +7,7 @@ import cats.Semigroup
 import cats.data.ValidatedNec
 import cats.implicits.*
 
-private[api] final case class RuleImpl[+E, -A](predicate: A => Boolean, caseFalse: E)
+private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean, caseFalse: E)
   extends Rule[E, A] {
 
   override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] =
@@ -33,11 +33,11 @@ private[api] final case class RuleImpl[+E, -A](predicate: A => Boolean, caseFals
   }
 
   override def narrow[B <: A]: Rule[E, B] = {
-    RuleImpl(predicate, caseFalse)
+    SingletonValidator(predicate, caseFalse)
   }
 
   override def contramap[B](f: B => A): Rule[E, B] = {
-    RuleImpl(predicate.compose(f), caseFalse)
+    SingletonValidator(predicate.compose(f), caseFalse)
   }
 
 }
