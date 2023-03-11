@@ -4,63 +4,73 @@ package fluentvalidators.api.impl
 import fluentvalidators.api.{Rule, Validator}
 
 import cats.Semigroup
-import cats.data.{EitherNec, NonEmptyChain, ValidatedNec}
-import cats.implicits.*
-import cats.syntax.group.*
+import cats.data.*
+import cats.implicits.catsSyntaxSemigroup
+import cats.syntax.either.{catsSyntaxEither, catsSyntaxEitherIdBinCompat0}
 
 private[api] final case class SeqValidator[+E, -A](validators: NonEmptyChain[Validator[E, A]])
   extends Validator[E, A] {
 
-  override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
-    validators.foldLeft(instance.asRight[NonEmptyChain[E]]) {
+  override def validate[B <: A](instance: B): ValidatedNec[E, B] = {
+    given semigroup: Semigroup[B] = Semigroup.first[B]
+
+    validators.foldLeft(instance.rightNec[E]) {
       (validated: EitherNec[E, B], validator: Validator[E, A]) =>
         validated |+| validator.validate(instance).toEither
     }.toValidated
   }
 
+  private def appendRule[EE >: E, B <: A](rule: Rule[EE, B]): SeqValidator[EE, B] = {
+
+    val appendedValidators: NonEmptyChain[Validator[EE, B]] =
+      this.validators.last match {
+
+        case lastValidator: SeqValidator[E, A] =>
+          NonEmptyChain.fromChainAppend(this.validators.init, lastValidator.appendRule(rule))
+
+        case _ =>
+          this.validators :+ rule
+
+      }
+
+    SeqValidator(appendedValidators)
+  }
+
   override protected def parseSeqHeadValidator[EE >: E, B <: A](
-    headValidator: Validator[EE, B]): Validator[EE, B] = {
+    headValidator: Validator[EE, B]
+  ): Validator[EE, B] = {
+
     headValidator match {
-      case rule: Rule[EE, B] => new SeqValidator(
-        this.validators.last match {
-          case lastValidator: SeqValidator[E, A] =>
-            NonEmptyChain.fromChainAppend(
-              this.validators.init,
-              new SeqValidator(lastValidator.validators :+ rule)
-            )
-          case _ =>
-            this.validators :+ rule
-        }
-      )
-      case SeqValidator(otherValidators) => new SeqValidator(this.validators ++ otherValidators)
+      case rule: Rule[EE, B] => this.appendRule(rule)
+      case SeqValidator(otherValidators) => SeqValidator(this.validators ++ otherValidators)
       case parValidator: ParValidator[EE, B] => SeqValidator(this, parValidator)
       case _: EmptyValidator[EE, B] => this
     }
   }
 
   override def par[EE >: E, B <: A](
-    firstValidator : Validator[EE, B],
+    firstValidator: Validator[EE, B],
     secondValidator: Validator[EE, B],
-    tailValidators : Validator[EE, B]*
+    tailValidators: Validator[EE, B]*
   ): Validator[EE, B] = {
     SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
   }
 
   override def narrow[B <: A]: Validator[E, B] = {
-    new SeqValidator[E, B](validators)
+    SeqValidator[E, B](validators)
   }
 
   override def contramap[B](f: B => A): Validator[E, B] = {
-    new SeqValidator(validators.map(_.contramap(f)))
+    SeqValidator(validators.map(_.contramap(f)))
   }
 
 }
 
 private[api] object SeqValidator {
   inline def apply[E, A](
-    inline headValidator : Validator[E, A],
+    inline headValidator: Validator[E, A],
     inline tailValidators: Validator[E, A]*
   ): SeqValidator[E, A] = {
-    new SeqValidator(NonEmptyChain.of(headValidator, tailValidators: _*))
+    SeqValidator(NonEmptyChain.of(headValidator, tailValidators: _*))
   }
 }

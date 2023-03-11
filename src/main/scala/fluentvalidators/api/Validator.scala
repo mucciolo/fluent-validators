@@ -13,15 +13,14 @@ import scala.annotation.tailrec
 
 trait Validator[+E, -A] {
 
-  def validate[B <: A](instance: B)
-    (using semigroup: Semigroup[B] = Semigroup.first[B]): ValidatedNec[E, B]
+  def validate[B <: A](instance: B): ValidatedNec[E, B]
 
   protected def parseSeqHeadValidator[EE >: E, B <: A](
     headValidator: Validator[EE, B]
   ): Validator[EE, B]
 
   def seq[EE >: E, B <: A](
-    headValidator : Validator[EE, B],
+    headValidator: Validator[EE, B],
     tailValidators: Validator[EE, B]*
   ): Validator[EE, B] = {
 
@@ -34,9 +33,9 @@ trait Validator[+E, -A] {
   }
 
   def par[EE >: E, B <: A](
-    firstValidator : Validator[EE, B],
+    firstValidator: Validator[EE, B],
     secondValidator: Validator[EE, B],
-    tailValidators : Validator[EE, B]*
+    tailValidators: Validator[EE, B]*
   ): Validator[EE, B]
 
   def narrow[B <: A]: Validator[E, B]

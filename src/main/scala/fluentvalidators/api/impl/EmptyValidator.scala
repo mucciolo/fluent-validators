@@ -9,7 +9,7 @@ import cats.implicits.*
 
 private[api] final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
 
-  override def validate[B <: A : Semigroup](instance: B): ValidatedNec[E, B] = {
+  override def validate[B <: A](instance: B): ValidatedNec[E, B] = {
     instance.validNec
   }
 
@@ -22,19 +22,19 @@ private[api] final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
   }
 
   override def par[EE >: E, B <: A](
-    firstValidator : Validator[EE, B],
+    firstValidator: Validator[EE, B],
     secondValidator: Validator[EE, B],
-    tailValidators : Validator[EE, B]*
+    tailValidators: Validator[EE, B]*
   ): Validator[EE, B] = {
     ParValidator(firstValidator, secondValidator, tailValidators: _*)
   }
 
   override def narrow[B <: A]: Validator[E, B] = {
-    new EmptyValidator[E, B]()
+    EmptyValidator[E, B]()
   }
 
   override def contramap[B](f: B => A): Validator[E, B] = {
-    new EmptyValidator[E, B]()
+    EmptyValidator[E, B]()
   }
 
 }
