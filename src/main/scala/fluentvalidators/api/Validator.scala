@@ -32,14 +32,14 @@ trait Validator[+E, -A] {
     }
   }
 
-  // TODO consider having a default implementation and override on EmptyValidator
   def par[EE >: E, B <: A](
     firstValidator: Validator[EE, B],
     secondValidator: Validator[EE, B],
     tailValidators: Validator[EE, B]*
-  ): Validator[EE, B]
+  ): Validator[EE, B] =
+    SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
 
-  // TODO consider the necessity of a widenError method
+  // TODO consider a widenError method
   def narrow[B <: A]: Validator[E, B]
 
   // TODO add error mapping

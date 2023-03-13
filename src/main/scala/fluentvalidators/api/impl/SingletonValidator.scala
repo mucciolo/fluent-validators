@@ -26,20 +26,8 @@ private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean
 
   }
 
-  override def par[EE >: E, B <: A](
-    firstValidator : Validator[EE, B],
-    secondValidator: Validator[EE, B],
-    tailValidators : Validator[EE, B]*
-  ): Validator[EE, B] = {
-    SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
-  }
+  override def narrow[B <: A]: Rule[E, B] = SingletonValidator(predicate, caseFalse)
 
-  override def narrow[B <: A]: Rule[E, B] = {
-    SingletonValidator(predicate, caseFalse)
-  }
-
-  override def contramap[B](f: B => A): Rule[E, B] = {
-    SingletonValidator(predicate.compose(f), caseFalse)
-  }
+  override def contramap[B](f: B => A): Rule[E, B] = SingletonValidator(predicate.compose(f), caseFalse)
 
 }

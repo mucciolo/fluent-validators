@@ -26,21 +26,9 @@ private[api] final case class ParValidator[+E, -A](validators: NonEmptyChain[Val
     case validator: Validator[EE, B] => SeqValidator(this, validator)
   }
 
-  override def par[EE >: E, B <: A](
-    firstValidator: Validator[EE, B],
-    secondValidator: Validator[EE, B],
-    tailValidators: Validator[EE, B]*
-  ): Validator[EE, B] = {
-    SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
-  }
+  override def narrow[B <: A]: Validator[E, B] = ParValidator[E, B](validators)
 
-  override def narrow[B <: A]: Validator[E, B] = {
-    ParValidator[E, B](validators)
-  }
-
-  override def contramap[B](f: B => A): Validator[E, B] = {
-    ParValidator(validators.map(_.contramap(f)))
-  }
+  override def contramap[B](f: B => A): Validator[E, B] = ParValidator(validators.map(_.contramap(f)))
 
 }
 
@@ -50,8 +38,7 @@ private[api] object ParValidator {
     inline firstValidator: Validator[E, A],
     inline secondValidator: Validator[E, A],
     inline tailValidators: Validator[E, A]*
-  ): ParValidator[E, A] = {
+  ): ParValidator[E, A] =
     ParValidator(firstValidator +: NonEmptyChain.of(secondValidator, tailValidators: _*))
-  }
 
 }
