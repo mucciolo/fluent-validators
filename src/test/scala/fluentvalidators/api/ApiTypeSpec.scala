@@ -6,10 +6,11 @@ import fluentvalidators.api.syntax.*
 
 import cats.data.ValidatedNec
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
+import com.mucciolo.fluentvalidators.matchers.ValidatedNecMatchers
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpec
 
-class ApiTypeTest extends AnyWordSpec with should.Matchers {
+final class ApiTypeSpec extends AnyWordSpec with should.Matchers with ValidatedNecMatchers {
 
   "Validator" when {
     "validatee type is A and B <: A" should {
@@ -28,7 +29,7 @@ class ApiTypeTest extends AnyWordSpec with should.Matchers {
         val b = new B
         val validB: ValidatedNec[Any, B] = validatorA.validate(b)
 
-        validB should === (b.validNec)
+        validB should beValid(b)
       }
 
     }

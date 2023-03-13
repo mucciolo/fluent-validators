@@ -5,9 +5,6 @@ import fluentvalidators.api.impl.{EmptyValidator, SingletonValidator}
 
 package object syntax {
 
-  def rule[E, A](predicate: A => Boolean, caseFalse: E): Rule[E, A] =
-    SingletonValidator(predicate, caseFalse)
-
   object Validator {
     inline def of[A] = new ValidatorBuilder[A]()
   }
@@ -15,5 +12,8 @@ package object syntax {
   final class ValidatorBuilder[-A]() {
     inline def withErrorTypeOf[E]: Validator[E, A] = new EmptyValidator[E, A]()
   }
+
+  def rule[E, A](predicate: A => Boolean, caseFalse: E): Rule[E, A] =
+    SingletonValidator(predicate, caseFalse)
 
 }
