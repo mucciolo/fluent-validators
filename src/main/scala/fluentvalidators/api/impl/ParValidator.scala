@@ -9,7 +9,7 @@ import cats.implicits.*
 import cats.syntax.group.*
 
 private[api] final case class ParValidator[+E, -A](validators: NonEmptyChain[Validator[E, A]])
-  extends Validator[E, A] {
+  extends ValidatorImpl[E, A] {
 
   override def validate[B <: A](instance: B): ValidatedNec[E, B] = {
     given semigroup: Semigroup[B] = Semigroup.first[B]

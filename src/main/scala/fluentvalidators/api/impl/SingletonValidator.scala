@@ -8,7 +8,7 @@ import cats.data.ValidatedNec
 import cats.implicits.*
 
 private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean, caseFalse: E)
-  extends Rule[E, A] {
+  extends ValidatorImpl[E, A] with Rule[E, A] {
 
   override def validate[B <: A](instance: B): ValidatedNec[E, B] =
     if (predicate(instance)) instance.validNec else caseFalse.invalidNec

@@ -9,7 +9,7 @@ import cats.implicits.catsSyntaxSemigroup
 import cats.syntax.either.{catsSyntaxEither, catsSyntaxEitherIdBinCompat0}
 
 private[api] final case class SeqValidator[+E, -A](validators: NonEmptyChain[Validator[E, A]])
-  extends Validator[E, A] {
+  extends ValidatorImpl[E, A] {
 
   override def validate[B <: A](instance: B): ValidatedNec[E, B] = {
     given semigroup: Semigroup[B] = Semigroup.first[B]

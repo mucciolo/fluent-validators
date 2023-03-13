@@ -7,7 +7,7 @@ import cats.Semigroup
 import cats.data.ValidatedNec
 import cats.implicits.*
 
-private[api] final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
+private[api] final case class EmptyValidator[+E, -A]() extends ValidatorImpl[E, A] {
 
   override def validate[B <: A](instance: B): ValidatedNec[E, B] = instance.validNec
 
