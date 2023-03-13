@@ -16,7 +16,7 @@ import org.scalatest.prop.*
 import org.scalatest.wordspec.AnyWordSpec
 
 // TODO test narrow and contramap
-final class ValidatorApiSpec extends AnyWordSpec with should.Matchers {
+final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
 
   "Validator" when {
 
@@ -27,10 +27,19 @@ final class ValidatorApiSpec extends AnyWordSpec with should.Matchers {
     }
 
     "seq" should {
-      "build a sequential validator" in {
+      "build a singleton validator given a single rule" in {
         Validator.of[Data]
           .withErrorTypeOf[FieldError]
-          .seq(rule(_.zero == 0, NonZeroInt("zero"))) shouldBe a[SeqValidator[FieldError, Data]]
+          .seq(rule(_.zero == 0, NonZeroInt("zero"))) shouldBe a[SingletonValidator[FieldError, Data]]
+      }
+
+      "build a sequential validator given two rules" in {
+        Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(
+            rule(_.negative < 0, NonNegativeInt("negative")),
+            rule(_.positive > 0, NonPositiveInt("positive"))
+          ) shouldBe a[SeqValidator[FieldError, Data]]
       }
     }
 
