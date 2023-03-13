@@ -96,4 +96,61 @@ final class ApiImplSpec extends AnyWordSpec with should.Matchers {
       }
     }
   }
+
+  "SeqValidator" when {
+    "created" should {
+      "be normalized to the same validator regardless of how it is declared" in {
+
+        val rule1: Rule[FieldError, Data] = rule(_.positive > 0, NonPositiveInt("data.positive"))
+        val rule2: Rule[FieldError, Data] = rule(_.negative < 0, NonNegativeInt("data.negative"))
+        val rule3: Rule[FieldError, Data] = rule(_.zero == 0, NonZeroInt("data.zero"))
+
+        val normalizedValidator = Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(rule1, rule2, rule3)
+
+        val val1 = Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(rule1)
+
+        val val2 = Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(rule2)
+
+        val val3 = Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(rule3)
+
+        val val12 = Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(rule1, rule2)
+
+        val val23 = Validator.of[Data]
+          .withErrorTypeOf[FieldError]
+          .seq(rule2, rule3)
+
+        val unnormalizedValidator =
+          List(
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(normalizedValidator),
+
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(rule1, rule2, rule3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(rule1, rule2).seq(rule3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(rule1).seq(rule2, rule3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(rule1).seq(rule2).seq(rule3),
+
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val1, val2, val3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val1, val2).seq(val3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val1).seq(val2, val3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val1).seq(val2).seq(val3),
+
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val12, rule3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val12, val3),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(rule1, val23),
+            Validator.of[Data].withErrorTypeOf[FieldError].seq(val1, val23)
+          )
+
+        forAll(unnormalizedValidator)(_ should === (normalizedValidator))
+      }
+    }
+  }
 }
