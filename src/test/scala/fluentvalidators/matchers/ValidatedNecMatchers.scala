@@ -18,9 +18,11 @@ trait ValidatedNecMatchers {
       )
   }
 
-  def beInvalidDue[E](headError: E, tailErrors: E*): Matcher[ValidatedNec[E, _]] = new BeInvalidMatcher[E](headError, tailErrors: _*)
+  def beInvalidDue[E](headError: E, tailErrors: E*): Matcher[ValidatedNec[E, _]] =
+    new BeInvalidMatcher[E](headError, tailErrors: _*)
 
-  final private class BeInvalidMatcher[E](headError: E, tailErrors: E*) extends Matcher[ValidatedNec[E, _]] {
+  final private class BeInvalidMatcher[E](headError: E, tailErrors: E*)
+    extends Matcher[ValidatedNec[E, _]] {
 
     private val errorsNec: NonEmptyChain[E] = NonEmptyChain.of(headError, tailErrors: _*)
 

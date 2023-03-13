@@ -1,6 +1,7 @@
 package com.mucciolo
 package fluentvalidators.api
 
+import fluentvalidators.api.Validator
 import fluentvalidators.api.impl.EmptyValidator
 import fluentvalidators.api.syntax.*
 import fluentvalidators.matchers.ValidatedNecMatchers
@@ -39,6 +40,36 @@ final class SyntaxSpec extends AnyWordSpec with should.Matchers with ValidatedNe
 
         nonEmptyStringRule.validate("") should beInvalidDue(EmptyString)
         nonEmptyStringRule.validate("nonempty") should beValid("nonempty")
+      }
+    }
+
+    "validate" should {
+      "use the correct context parameter" in {
+
+        final case class Data(n: Int)
+        object Data {
+          given dataValidator: Validator[String, Data] =
+            Validator.of[Data].withErrorTypeOf[String].seq(rule(_.n != 0, "zero"))
+        }
+
+        validate(Data(0)) should beInvalidDue("zero")
+        validate(Data(1)) should beValid(Data(1))
+
+      }
+    }
+
+    "validated" should {
+      "use the correct context parameter" in {
+
+        final case class Data(n: Int)
+        object Data {
+          given dataValidator: Validator[String, Data] =
+            Validator.of[Data].withErrorTypeOf[String].seq(rule(_.n != 0, "zero"))
+        }
+
+        Data(0).validated should beInvalidDue("zero")
+        Data(1).validated should beValid(Data(1))
+
       }
     }
   }

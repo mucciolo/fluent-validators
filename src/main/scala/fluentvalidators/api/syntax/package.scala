@@ -3,6 +3,8 @@ package fluentvalidators.api
 
 import fluentvalidators.api.impl.{EmptyValidator, SingletonValidator}
 
+import cats.data.ValidatedNec
+
 package object syntax {
 
   object Validator {
@@ -14,6 +16,13 @@ package object syntax {
   }
 
   def rule[E, A](predicate: A => Boolean, caseFalse: E): Rule[E, A] =
-    SingletonValidator(predicate, caseFalse)
+    SingletonValidator[E, A](predicate, caseFalse)
+
+  inline def validate[E, A](inline instance: A)(using validator: Validator[E, A]): ValidatedNec[E, A] =
+    validator.validate(instance)
+
+  extension [A](instance: A) {
+    inline def validated[E](using Validator[E, A]): ValidatedNec[E, A] = validate(instance)
+  }
 
 }
