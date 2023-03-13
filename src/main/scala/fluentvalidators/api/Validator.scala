@@ -1,13 +1,9 @@
 package com.mucciolo
 package fluentvalidators.api
 
-import fluentvalidators.api.Validator.*
 import fluentvalidators.api.impl.*
 
-import cats.Semigroup
 import cats.data.*
-import cats.implicits.*
-import cats.syntax.*
 
 import scala.annotation.tailrec
 
@@ -42,12 +38,4 @@ trait Validator[+E, -A] {
   // TODO add error mapping
   def contramap[B](f: B => A): Validator[E, B]
 
-}
-
-object Validator {
-  inline def of[A] = new ValidatorBuilder[A]()
-}
-
-private final class ValidatorBuilder[-A]() {
-  inline def withErrorTypeOf[E]: Validator[E, A] = new EmptyValidator[E, A]()
 }

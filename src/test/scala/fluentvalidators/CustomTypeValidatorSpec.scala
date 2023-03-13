@@ -5,7 +5,6 @@ import fluentvalidators.TestFixtures.*
 import fluentvalidators.TestFixtures.FieldError.*
 import fluentvalidators.api.*
 import fluentvalidators.api.syntax.*
-import fluentvalidators.api.Validator.*
 import fluentvalidators.matchers.ValidatedNecMatchers
 
 import cats.data.Validated

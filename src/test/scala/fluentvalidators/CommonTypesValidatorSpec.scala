@@ -28,7 +28,7 @@ final class CommonTypesValidatorSpec extends AnyWordSpec
 
       val validator: Validator[SimpleError, String] =
         Validator.of[String].withErrorTypeOf[SimpleError]
-          .seq(rule(!_.isBlank, EmptyString))
+          .seq(rule(_.trim.nonEmpty, EmptyString))
 
       "return validated instance when rule is satisfied" in {
         validator.validate("str") should beValid("str")
