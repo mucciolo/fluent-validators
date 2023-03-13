@@ -26,8 +26,6 @@ private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean
 
   }
 
-  override def narrow[B <: A]: Rule[E, B] = SingletonValidator(predicate, caseFalse)
-
   override def contramap[B](f: B => A): Rule[E, B] = SingletonValidator(predicate.compose(f), caseFalse)
 
 }

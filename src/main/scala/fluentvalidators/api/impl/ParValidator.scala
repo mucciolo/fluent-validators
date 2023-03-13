@@ -26,8 +26,6 @@ private[api] final case class ParValidator[+E, -A](validators: NonEmptyChain[Val
     case validator: Validator[EE, B] => SeqValidator(this, validator)
   }
 
-  override def narrow[B <: A]: Validator[E, B] = ParValidator[E, B](validators)
-
   override def contramap[B](f: B => A): Validator[E, B] = ParValidator(validators.map(_.contramap(f)))
 
 }

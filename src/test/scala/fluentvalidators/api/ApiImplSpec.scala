@@ -15,14 +15,13 @@ import org.scalatest.matchers.*
 import org.scalatest.prop.*
 import org.scalatest.wordspec.AnyWordSpec
 
-// TODO test narrow and contramap
-final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
+final class ApiImplSpec extends AnyWordSpec with should.Matchers {
 
   "Validator" when {
 
     "just created" should {
       "be empty" in {
-        Validator.of[Data].withErrorTypeOf[FieldError] shouldBe an[EmptyValidator[FieldError, Data]]
+        Validator.of[Data].withErrorTypeOf[FieldError] shouldBe an[EmptyValidator[_, _]]
       }
     }
 
@@ -30,7 +29,7 @@ final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
       "build a singleton validator given a single rule" in {
         Validator.of[Data]
           .withErrorTypeOf[FieldError]
-          .seq(rule(_.zero == 0, NonZeroInt("zero"))) shouldBe a[SingletonValidator[FieldError, Data]]
+          .seq(rule(_.zero == 0, NonZeroInt("zero"))) shouldBe a[SingletonValidator[_, _]]
       }
 
       "build a sequential validator given two rules" in {
@@ -39,7 +38,7 @@ final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
           .seq(
             rule(_.negative < 0, NonNegativeInt("negative")),
             rule(_.positive > 0, NonPositiveInt("positive"))
-          ) shouldBe a[SeqValidator[FieldError, Data]]
+          ) shouldBe a[SeqValidator[_, _]]
       }
     }
 
@@ -50,7 +49,7 @@ final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
           .par(
             rule(_.negative < 0, NonNegativeInt("negative")),
             rule(_.positive > 0, NonPositiveInt("positive"))
-          ) shouldBe a[ParValidator[FieldError, Data]]
+          ) shouldBe a[ParValidator[_, _]]
       }
     }
 
@@ -64,7 +63,7 @@ final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
           .par(
             rule(_.negative < 0, NonNegativeInt("negative")),
             rule(_.positive > 0, NonPositiveInt("positive"))
-          ) shouldBe a[SeqValidator[FieldError, Data]]
+          ) shouldBe a[SeqValidator[_, _]]
       }
     }
 
@@ -78,7 +77,7 @@ final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
           )
           .seq(
             rule(_.zero == 0, NonZeroInt("zero"))
-          ) shouldBe a[SeqValidator[FieldError, Data]]
+          ) shouldBe a[SeqValidator[_, _]]
       }
     }
 
@@ -93,7 +92,7 @@ final class ValidatorApiImplSpec extends AnyWordSpec with should.Matchers {
           .par(
             rule(_.zero == 0, NonZeroInt("zero")),
             rule(_.nonEmpty.nonEmpty, EmptyString("nonEmpty"))
-          ) shouldBe a[SeqValidator[FieldError, Data]]
+          ) shouldBe a[SeqValidator[_, _]]
       }
     }
   }

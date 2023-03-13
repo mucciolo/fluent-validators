@@ -39,9 +39,6 @@ trait Validator[+E, -A] {
   ): Validator[EE, B] =
     SeqValidator(this, ParValidator(firstValidator, secondValidator, tailValidators: _*))
 
-  // TODO consider a widenError method
-  def narrow[B <: A]: Validator[E, B]
-
   // TODO add error mapping
   def contramap[B](f: B => A): Validator[E, B]
 

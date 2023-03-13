@@ -23,8 +23,6 @@ private[api] final case class EmptyValidator[+E, -A]() extends Validator[E, A] {
   ): Validator[EE, B] =
     ParValidator(firstValidator, secondValidator, tailValidators: _*)
 
-  override def narrow[B <: A]: Validator[E, B] = EmptyValidator[E, B]()
-
   override def contramap[B](f: B => A): Validator[E, B] = EmptyValidator[E, B]()
 
 }
