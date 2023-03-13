@@ -11,7 +11,6 @@ import cats.syntax.*
 
 import scala.annotation.tailrec
 
-// TODO fluentvalidators.syntax
 trait Validator[+E, -A] {
 
   def validate[B <: A](instance: B): ValidatedNec[E, B]

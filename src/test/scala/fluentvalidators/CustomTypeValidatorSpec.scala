@@ -4,7 +4,7 @@ package fluentvalidators
 import fluentvalidators.TestFixtures.*
 import fluentvalidators.TestFixtures.FieldError.*
 import fluentvalidators.api.*
-import fluentvalidators.api.Rule.rule
+import fluentvalidators.api.syntax.*
 import fluentvalidators.api.Validator.*
 import fluentvalidators.matchers.ValidatedNecMatchers
 
