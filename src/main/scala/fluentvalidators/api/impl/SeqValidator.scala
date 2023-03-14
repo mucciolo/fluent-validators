@@ -1,7 +1,8 @@
 package com.mucciolo
 package fluentvalidators.api.impl
 
-import fluentvalidators.api.{Rule, Validator}
+import fluentvalidators.api.*
+import fluentvalidators.api.syntax.*
 
 import cats.Semigroup
 import cats.data.*

@@ -1,14 +1,15 @@
 package com.mucciolo
 package fluentvalidators.api.impl
 
-import fluentvalidators.api.{Rule, Validator}
+import fluentvalidators.api.*
+import fluentvalidators.api.syntax.*
 
 import cats.Semigroup
 import cats.data.ValidatedNec
 import cats.implicits.*
 
 private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean, caseFalse: E)
-  extends ValidatorImpl[E, A] with Rule[E, A] {
+  extends Rule[E, A] with ValidatorImpl[E, A] {
 
   override def validate[B <: A](instance: B): ValidatedNec[E, B] =
     if (predicate(instance)) instance.validNec else caseFalse.invalidNec

@@ -15,6 +15,13 @@ package object syntax {
     inline def withErrorTypeOf[E]: Validator[E, A] = new EmptyValidator[E, A]()
   }
 
+  /**
+    * A rule is a special case of a validator consisting of a single predicate.
+    */
+  trait Rule[+E, -A] extends Validator[E, A] {
+    override def dimap[B, F](f: B => A, g: E => F): Rule[F, B]
+  }
+
   def rule[E, A](predicate: A => Boolean, caseFalse: E): Rule[E, A] =
     SingletonValidator[E, A](predicate, caseFalse)
 
