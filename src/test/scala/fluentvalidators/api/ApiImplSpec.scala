@@ -15,6 +15,7 @@ import org.scalatest.matchers.*
 import org.scalatest.prop.*
 import org.scalatest.wordspec.AnyWordSpec
 
+// TODO test dimap
 final class ApiImplSpec extends AnyWordSpec with should.Matchers {
 
   "Validator" when {

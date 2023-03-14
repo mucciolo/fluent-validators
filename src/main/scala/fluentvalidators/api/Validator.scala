@@ -20,7 +20,6 @@ trait Validator[+E, -A] {
     tailValidators: Validator[EE, B]*
   ): Validator[EE, B]
 
-  // TODO add error mapping
-  def contramap[B](f: B => A): Validator[E, B]
+  def dimap[B, F](f: B => A, g: E => F): Validator[F, B]
 
 }

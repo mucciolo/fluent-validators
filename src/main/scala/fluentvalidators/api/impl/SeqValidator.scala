@@ -48,7 +48,8 @@ private[api] final case class SeqValidator[+E, -A](validators: NonEmptyChain[Val
     }
   }
 
-  override def contramap[B](f: B => A): Validator[E, B] = SeqValidator(validators.map(_.contramap(f)))
+  override def dimap[B, F](f: B => A, g: E => F): Validator[F, B] =
+    SeqValidator(validators.map(_.dimap(f, g)))
 
 }
 

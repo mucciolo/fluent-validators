@@ -26,6 +26,7 @@ private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean
 
   }
 
-  override def contramap[B](f: B => A): Rule[E, B] = SingletonValidator(predicate.compose(f), caseFalse)
+  override def dimap[B, F](f: B => A, g: E => F): Rule[F, B] =
+    SingletonValidator(f.andThen(predicate), g(caseFalse))
 
 }
