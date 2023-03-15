@@ -5,6 +5,10 @@ import fluentvalidators.api.impl.*
 
 import cats.data.*
 
+/**
+  * @tparam E error
+  * @tparam A validatee
+  */
 trait Validator[+E, -A] {
 
   /**
@@ -33,6 +37,6 @@ trait Validator[+E, -A] {
     * A contramap in the validatee type and a map in the error type.
     * @note Terminology borrowed from profunctors.
     */
-  def dimap[B, F](f: B => A, g: E => F): Validator[F, B]
+  def dimap[AA, F](f: AA => A, g: E => F): Validator[F, AA]
 
 }

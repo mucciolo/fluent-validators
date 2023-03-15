@@ -53,7 +53,7 @@ private[api] final case class SeqValidator[+E, -A] private (validators: NonEmpty
     }
   }
 
-  override def dimap[B, F](f: B => A, g: E => F): SeqValidator[F, B] =
+  override def dimap[AA, F](f: AA => A, g: E => F): SeqValidator[F, AA] =
     SeqValidator(validators.map(_.dimap(f, g)))
 
 }

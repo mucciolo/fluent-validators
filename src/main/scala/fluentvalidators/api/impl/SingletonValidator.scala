@@ -29,7 +29,7 @@ private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean
 
   }
 
-  override def dimap[B, F](f: B => A, g: E => F): SingletonValidator[F, B] =
+  override def dimap[AA, F](f: AA => A, g: E => F): SingletonValidator[F, AA] =
     SingletonValidator(f.andThen(predicate), g(caseFalse))
 
 }
