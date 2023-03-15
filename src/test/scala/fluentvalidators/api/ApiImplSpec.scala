@@ -3,10 +3,10 @@ package fluentvalidators.api
 
 import fluentvalidators.TestFixtures.*
 import fluentvalidators.TestFixtures.FieldError.*
-import fluentvalidators.api.syntax.*
 import fluentvalidators.api.Validator
-import fluentvalidators.api.syntax.*
 import fluentvalidators.api.impl.*
+import fluentvalidators.api.syntax.*
+import fluentvalidators.matchers.ValidatedNecMatchers
 
 import org.scalatest.*
 import org.scalatest.Inspectors.*
@@ -15,8 +15,20 @@ import org.scalatest.matchers.*
 import org.scalatest.prop.*
 import org.scalatest.wordspec.AnyWordSpec
 
-// TODO test dimap
-final class ApiImplSpec extends AnyWordSpec with should.Matchers {
+final class ApiImplSpec extends AnyWordSpec with should.Matchers with ValidatedNecMatchers {
+
+  sealed trait StringError
+  case object EmptyString extends StringError
+  case object ContainsSpecialChars extends StringError
+
+  sealed trait IntError
+  case object ZeroOrNegativeInt extends IntError
+  case object NotEvenInt extends IntError
+
+  final case class User(name: String)
+  sealed trait UserError
+  case object EmptyName extends UserError
+  case object InvalidName extends UserError
 
   "Validator" when {
 
@@ -92,10 +104,62 @@ final class ApiImplSpec extends AnyWordSpec with should.Matchers {
           )
           .par(
             rule(_.zero == 0, NonZeroInt("zero")),
-            rule(_.nonEmpty.nonEmpty, EmptyString("nonEmpty"))
+            rule(_.nonEmpty.nonEmpty, FieldError.EmptyString("nonEmpty"))
           ) shouldBe a[SeqValidator[_, _]]
       }
     }
+  }
+
+  "EmptyValidator" when {
+
+    val stringEmptyValidator = EmptyValidator[StringError, String]()
+
+    "dimap" should {
+
+      val userEmptyValidator: EmptyValidator[UserError, User] =
+        stringEmptyValidator.dimap(
+          user => user.name,
+          {
+            case EmptyString => EmptyName
+            case ContainsSpecialChars => InvalidName
+          }
+        )
+
+      "create a new empty validator with mapping types" in {
+        userEmptyValidator shouldBe a[EmptyValidator[_, _]]
+      }
+    }
+
+  }
+
+  "SingletonValidator" when {
+
+    val stringSingletonValidator = SingletonValidator[StringError, String](_.nonEmpty, EmptyString)
+
+    "dimap" should {
+
+      val userSingletonValidator: SingletonValidator[UserError, User] =
+        stringSingletonValidator.dimap(
+          user => user.name,
+          {
+            case EmptyString => EmptyName
+            case ContainsSpecialChars => InvalidName
+          }
+        )
+
+      "create a new singleton validator" in {
+        userSingletonValidator shouldBe a[SingletonValidator[_, _]]
+      }
+
+      "project the new validator onto the mapped validator" in {
+        stringSingletonValidator.validate("") should beInvalidDue(EmptyString)
+        userSingletonValidator.validate(User(name = "")) should beInvalidDue(EmptyName)
+
+        stringSingletonValidator.validate("nonempty") should beValid("nonempty")
+        userSingletonValidator.validate(User(name = "nonempty")) should beValid(User(name = "nonempty"))
+      }
+    }
+
   }
 
   "SeqValidator" when {
@@ -150,7 +214,84 @@ final class ApiImplSpec extends AnyWordSpec with should.Matchers {
             Validator.of[Data].withErrorTypeOf[FieldError].seq(val1, val23)
           )
 
-        forAll(unnormalizedValidator)(_ should === (normalizedValidator))
+        forAll(unnormalizedValidator)(_ should ===(normalizedValidator))
+      }
+    }
+
+    val stringSeqValidator = SeqValidator[StringError, String](
+      SingletonValidator(_.nonEmpty, EmptyString),
+      SingletonValidator(_.forall(c => c.isLetter || c.isSpaceChar), ContainsSpecialChars)
+    )
+
+    "dimap" should {
+
+      val userSeqValidator: SeqValidator[UserError, User] =
+        stringSeqValidator.dimap(
+          user => user.name,
+          {
+            case EmptyString => EmptyName
+            case ContainsSpecialChars => InvalidName
+          }
+        )
+
+      "create a new sequential validator with mapping types" in {
+        userSeqValidator shouldBe a[SeqValidator[_, _]]
+      }
+
+      "project the new validator onto the mapped validator" in {
+        stringSeqValidator.validate("") should beInvalidDue(EmptyString)
+        userSeqValidator.validate(User(name = "")) should beInvalidDue(EmptyName)
+
+        stringSeqValidator.validate("Test_") should beInvalidDue(ContainsSpecialChars)
+        userSeqValidator.validate(User(name = "Test_")) should beInvalidDue(InvalidName)
+
+        stringSeqValidator.validate("Test") should beValid("Test")
+        userSeqValidator.validate(User(name = "Test")) should beValid(User(name = "Test"))
+      }
+
+    }
+
+  }
+
+  "ParValidator" when {
+
+    val intParValidator = ParValidator[IntError, Int](
+      SingletonValidator[IntError, Int](_ > 0, ZeroOrNegativeInt),
+      SingletonValidator[IntError, Int](_ % 2 == 0, NotEvenInt)
+    )
+
+    "dimap" should {
+
+      final case class PositiveEvenInt(n: Int)
+      sealed trait PositiveEvenIntError
+      case object NonPositiveInt extends PositiveEvenIntError
+      case object OddInt extends PositiveEvenIntError
+
+      val wrappedPosEvenIntParValidator: ParValidator[PositiveEvenIntError, PositiveEvenInt] =
+        intParValidator.dimap(
+          posEvenInt => posEvenInt.n,
+          {
+            case ZeroOrNegativeInt => NonPositiveInt
+            case NotEvenInt => OddInt
+          }
+        )
+
+      "create a new parallel validator" in {
+        wrappedPosEvenIntParValidator shouldBe a[ParValidator[_, _]]
+      }
+
+      "project the new validator onto the mapped validator" in {
+        intParValidator.validate(-1) should beInvalidDue(ZeroOrNegativeInt, NotEvenInt)
+        wrappedPosEvenIntParValidator.validate(PositiveEvenInt(-1)) should beInvalidDue(NonPositiveInt, OddInt)
+
+        intParValidator.validate(0) should beInvalidDue(ZeroOrNegativeInt)
+        wrappedPosEvenIntParValidator.validate(PositiveEvenInt(0)) should beInvalidDue(NonPositiveInt)
+
+        intParValidator.validate(1) should beInvalidDue(NotEvenInt)
+        wrappedPosEvenIntParValidator.validate(PositiveEvenInt(1)) should beInvalidDue(OddInt)
+
+        intParValidator.validate(2) should beValid(2)
+        wrappedPosEvenIntParValidator.validate(PositiveEvenInt(2)) should beValid(PositiveEvenInt(2))
       }
     }
   }

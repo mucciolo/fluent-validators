@@ -9,7 +9,7 @@ import cats.data.*
 import cats.implicits.catsSyntaxSemigroup
 import cats.syntax.either.{catsSyntaxEither, catsSyntaxEitherIdBinCompat0}
 
-private[api] final case class SeqValidator[+E, -A](validators: NonEmptyChain[Validator[E, A]])
+private[api] final case class SeqValidator[+E, -A] private (validators: NonEmptyChain[Validator[E, A]])
   extends ValidatorImpl[E, A] {
 
   override def validate[B <: A](instance: B): ValidatedNec[E, B] = {
@@ -19,6 +19,10 @@ private[api] final case class SeqValidator[+E, -A](validators: NonEmptyChain[Val
       (validated: EitherNec[E, B], validator: Validator[E, A]) =>
         validated |+| validator.validate(instance).toEither
     }.toValidated
+  }
+
+  def preppendRule[EE >: E, B <: A](rule: Rule[EE, B]): SeqValidator[EE, B] = {
+    SeqValidator(rule +: validators)
   }
 
   private def appendRule[EE >: E, B <: A](rule: Rule[EE, B]): SeqValidator[EE, B] = {
@@ -49,7 +53,7 @@ private[api] final case class SeqValidator[+E, -A](validators: NonEmptyChain[Val
     }
   }
 
-  override def dimap[B, F](f: B => A, g: E => F): Validator[F, B] =
+  override def dimap[B, F](f: B => A, g: E => F): SeqValidator[F, B] =
     SeqValidator(validators.map(_.dimap(f, g)))
 
 }

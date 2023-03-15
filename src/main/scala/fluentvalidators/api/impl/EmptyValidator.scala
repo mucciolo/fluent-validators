@@ -21,9 +21,9 @@ private[api] final case class EmptyValidator[+E, -A]() extends ValidatorImpl[E, 
     firstValidator: Validator[EE, B],
     secondValidator: Validator[EE, B],
     tailValidators: Validator[EE, B]*
-  ): Validator[EE, B] =
+  ): ParValidator[EE, B] =
     ParValidator(firstValidator, secondValidator, tailValidators: _*)
 
-  override def dimap[B, F](f: B => A, g: E => F): Validator[F, B] = EmptyValidator[F, B]()
+  override def dimap[B, F](f: B => A, g: E => F): EmptyValidator[F, B] = EmptyValidator[F, B]()
 
 }

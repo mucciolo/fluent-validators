@@ -21,13 +21,15 @@ private[api] final case class SingletonValidator[+E, -A](predicate: A => Boolean
     case ruleOrParValidator: (Rule[EE, B] | ParValidator[EE, B]) =>
       SeqValidator(this, ruleOrParValidator)
 
-    case SeqValidator(validators) => SeqValidator(this +: validators)
+    case seqValidator: SeqValidator[EE, B] =>
+      seqValidator.preppendRule(this)
 
-    case _: EmptyValidator[EE, B] => this
+    case _: EmptyValidator[EE, B] =>
+      this
 
   }
 
-  override def dimap[B, F](f: B => A, g: E => F): Rule[F, B] =
+  override def dimap[B, F](f: B => A, g: E => F): SingletonValidator[F, B] =
     SingletonValidator(f.andThen(predicate), g(caseFalse))
 
 }
